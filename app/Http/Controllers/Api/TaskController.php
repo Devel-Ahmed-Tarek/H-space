@@ -168,11 +168,6 @@ class TaskController extends Controller
 
         $file = $request->file('file');
 
-        // Validate file exists and is accessible
-        if (! $file || ! $file->isValid()) {
-            return HelperFunc::sendResponse(422, 'الملف غير صالح أو غير موجود');
-        }
-
         try {
             $path = HelperFunc::uploadFile('task-attachments', $file);
 
@@ -181,10 +176,7 @@ class TaskController extends Controller
             try {
                 $fileSize = $file->getSize();
             } catch (\Exception $e) {
-                // If we can't get size, try to get it from the uploaded file
-                if (file_exists($path)) {
-                    $fileSize = filesize($path);
-                }
+
             }
 
             $attachment = $task->attachments()->create([
