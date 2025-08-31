@@ -168,22 +168,24 @@ class TaskController extends Controller
 
         $file = $request->file('file');
 
+        // Get file info before uploading
+        $fileName = $file->getClientOriginalName();
+        $fileSize = $file->getSize();
+        $mimeType = $file->getMimeType();
+
         try {
             $path = HelperFunc::uploadFile('task-attachments', $file);
 
-            // Get file size safely
-            $fileSize = 0;
-            try {
-                $fileSize = $file->getSize();
-            } catch (\Exception $e) {
-
+            // Verify file was uploaded successfully
+            if (! file_exists($path)) {
+                return HelperFunc::sendResponse(500, 'فشل في رفع الملف: الملف غير موجود بعد الرفع');
             }
 
             $attachment = $task->attachments()->create([
-                'file_name'   => $file->getClientOriginalName(),
+                'file_name'   => $fileName,
                 'file_path'   => $path,
                 'file_size'   => $fileSize,
-                'mime_type'   => $file->getMimeType(),
+                'mime_type'   => $mimeType,
                 'uploaded_by' => $user->id,
             ]);
 
@@ -207,10 +209,6 @@ class TaskController extends Controller
             $task->assigned_user_id !== $user->id &&
             $task->project->project_manager_id !== $user->id) {
             return HelperFunc::sendResponse(403, 'غير مصرح. يمكنك فقط تحميل المرفقات للمهام المكلفة لك أو المهام في مشاريعك.');
-        }
-
-        if (! file_exists($attachment->file_path)) {
-            return HelperFunc::sendResponse(404, 'الملف غير موجود');
         }
 
         return response()->download(

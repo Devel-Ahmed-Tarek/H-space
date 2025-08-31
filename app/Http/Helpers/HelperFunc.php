@@ -23,13 +23,22 @@ class HelperFunc
                 mkdir($uploadPath, 0755, true);
             }
 
+            // Use move method directly for better control
             $result = $file->move($uploadPath, $name);
 
             if (! $result) {
                 throw new \Exception('Failed to move uploaded file');
             }
 
-            return (string) $result;
+            // Return the full path that matches the actual file location
+            $fullPath = $uploadPath . '/' . $name;
+
+            // Verify file exists after move
+            if (! file_exists($fullPath)) {
+                throw new \Exception('File not found after upload');
+            }
+
+            return $fullPath;
         } catch (\Exception $e) {
             // Log the error for debugging
             Log::error('File upload failed: ' . $e->getMessage(), [
