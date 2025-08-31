@@ -1,14 +1,45 @@
 <?php
 namespace App\Http\Helpers;
 
+use Illuminate\Support\Facades\Log;
+
 class HelperFunc
 {
 
     public static function uploadFile($path, $file)
     {
-        $extension = strtolower($file->getClientOriginalExtension());
-        $name      = time() . rand(100, 999) . '.' . $extension;
-        return (string) $file->move('uploads/' . $path, $name);
+        try {
+            // Validate file
+            if (! $file || ! $file->isValid()) {
+                throw new \Exception('Invalid file');
+            }
+
+            $extension = strtolower($file->getClientOriginalExtension());
+            $name      = time() . rand(100, 999) . '.' . $extension;
+
+            // Create directory if it doesn't exist
+            $uploadPath = 'uploads/' . $path;
+            if (! file_exists($uploadPath)) {
+                mkdir($uploadPath, 0755, true);
+            }
+
+            $result = $file->move($uploadPath, $name);
+
+            if (! $result) {
+                throw new \Exception('Failed to move uploaded file');
+            }
+
+            return (string) $result;
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            Log::error('File upload failed: ' . $e->getMessage(), [
+                'path'          => $path,
+                'original_name' => $file ? $file->getClientOriginalName() : 'unknown',
+                'error'         => $e->getMessage(),
+            ]);
+
+            throw new \Exception('فشل في رفع الملف: ' . $e->getMessage());
+        }
     }
 
     public static function deleteFile($file)

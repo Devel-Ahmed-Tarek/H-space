@@ -167,15 +167,37 @@ class TaskController extends Controller
         }
 
         $file = $request->file('file');
-        $path = HelperFunc::uploadFile('task-attachments', $file);
 
-        $attachment = $task->attachments()->create([
-            'file_name'   => $file->getClientOriginalName(),
-            'file_path'   => $path,
-            'file_size'   => $file->getSize(),
-            'mime_type'   => $file->getMimeType(),
-            'uploaded_by' => $user->id,
-        ]);
+        // Validate file exists and is accessible
+        if (! $file || ! $file->isValid()) {
+            return HelperFunc::sendResponse(422, 'الملف غير صالح أو غير موجود');
+        }
+
+        try {
+            $path = HelperFunc::uploadFile('task-attachments', $file);
+
+            // Get file size safely
+            $fileSize = 0;
+            try {
+                $fileSize = $file->getSize();
+            } catch (\Exception $e) {
+                // If we can't get size, try to get it from the uploaded file
+                if (file_exists($path)) {
+                    $fileSize = filesize($path);
+                }
+            }
+
+            $attachment = $task->attachments()->create([
+                'file_name'   => $file->getClientOriginalName(),
+                'file_path'   => $path,
+                'file_size'   => $fileSize,
+                'mime_type'   => $file->getMimeType(),
+                'uploaded_by' => $user->id,
+            ]);
+
+        } catch (\Exception $e) {
+            return HelperFunc::sendResponse(500, 'فشل في رفع الملف: ' . $e->getMessage());
+        }
 
         return HelperFunc::sendResponse(201, 'تم رفع المرفق بنجاح', $attachment->load('uploadedBy'));
     }
