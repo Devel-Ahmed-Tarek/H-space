@@ -333,8 +333,8 @@ php artisan optimize
 
 ## 📞 Support
 
-* 📧 Email: [support@company.com](mailto:support@company.com)
-* 📱 Phone: +1234567890
+* 📧 Email: [ahmed.tarek.devel@gmail.com](mailto:support@company.com)
+* 📱 Phone: +201023237805
 * 💬 Slack: `#project-management`
 
 ---
